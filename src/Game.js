@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { doc, getDoc, setDoc } from "firebase/firestore";
-// import { doc, onSnapshot } from "firebase/firestore";
+import Nav from './Nav';
 
+// This is the main component for the game
+// Rendered when the user is in a lobby
 export default function Game(props) {
-    const { lobbyId, leaveLobby, players, user, readyPlayer, firestore } = props;
+    const { lobbyId, leaveLobby, players, user, readyPlayer, firestore, signOutUser } = props;
 
     const [gameLeader, setGameLeader] = useState("");
     const [gameState, setGameState] = useState([]);
@@ -87,42 +89,39 @@ export default function Game(props) {
     }
 
     return (
-        <div>
-            <h1>{gameLeader.name}'s Game</h1>
-            <h2>Your lobby ID is: {lobbyId}</h2>
-            <p>Give this to your friends so they can join!</p>
-            <form>
-                <button type="submit" onClick={(e) => {
-                    e.preventDefault();
-                    leaveLobby();
-                }}>Leave</button>
-            </form>
-            <div>
-                <h2>Players</h2>
-                <ul className='list-group list-group-horizontal'>
-                    {players.map((player) => {
-                        return <li key={player.email}>
-                            <div className='card'>
-                                <img src={player.image} alt={`${player.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
-                                <div className='card-body'>
-                                    <h5 className='card-title'>{player.name}</h5>
-                                    {user.email === player.email ?
-                                        <div>
-                                            <button onClick={() => { readyPlayer(player.ready) }}>{player.ready ? "Ready" : "Not Ready"}</button>
-                                            <p>{player?.hand}</p>
-                                        </div>
-                                        :
-                                        <div>
-                                            <p className='card-text'>{player.ready ? "Ready" : "Not Ready"}</p>
-                                            <p>{player?.hand?.length}</p>
-                                        </div>
-                                    }
+        <>
+            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby}/>
+            <main>
+                <h1>{gameLeader.name}'s Game</h1>
+                <h2>Your lobby ID is: {lobbyId}</h2>
+                <p>Give this to your friends so they can join!</p>
+                <div>
+                    <h2>Players</h2>
+                    <ul className='list-group list-group-horizontal'>
+                        {players.map((player) => {
+                            return <li key={player.email}>
+                                <div className='card'>
+                                    <img src={player.image} alt={`${player.name} profile`} className="rounded-circle" height="50px" width="50px" referrerpolicy="no-referrer" referrerPolicy="no-referrer"></img>
+                                    <div className='card-body'>
+                                        <h5 className='card-title'>{player.name}</h5>
+                                        {user.email === player.email ?
+                                            <div>
+                                                <button onClick={() => { readyPlayer(player.ready) }}>{player.ready ? "Ready" : "Not Ready"}</button>
+                                                <p>{player?.hand}</p>
+                                            </div>
+                                            :
+                                            <div>
+                                                <p className='card-text'>{player.ready ? "Ready" : "Not Ready"}</p>
+                                                <p>{player?.hand?.length}</p>
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
-                        </li>
-                    })}
-                </ul>
-            </div>
-        </div>
+                            </li>
+                        })}
+                    </ul>
+                </div>
+            </main>
+        </>
     )
 }

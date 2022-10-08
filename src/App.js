@@ -99,7 +99,7 @@ function Home(props) {
 		// Delete the player from the lobby in the database
 		await deleteDoc(doc(firestore, "lobbies", prevLobbyId, "players", user.email));
 		// Delete the lobby if there are no more players
-		if (players.length <= 1) {
+		if (players.length < 1) {
 			await deleteDoc(doc(firestore, "lobbies", prevLobbyId));
 		}
 	}
@@ -157,31 +157,29 @@ function Home(props) {
 		setGameLeader(lobbyRef.id);
 	}
 
-	async function setGameLeader(lobbyId){
+	async function setGameLeader(lobbyId) {
 		const lobbyRef = doc(firestore, "lobbies", lobbyId);
 		await updateDoc(lobbyRef, {
-			gameLeader: {email: user.email,
-						name: user.displayName,
-						image: user.photoURL}
+			gameLeader: {
+				email: user.email,
+				name: user.displayName,
+				image: user.photoURL
+			}
 		});
 	}
 
+	function signOutUser() {
+		signOut(auth);
+	}
+
 	return (
-		<div>
-			<nav className="navbar navbar-dark bg-primary">
-				<div className="container-fluid">
-					<span className="navbar-brand mb-0 h1">Cards</span>
-					<span className='d-flex align-items-center'>
-						<img src={auth.currentUser.photoURL} alt='profile' className='rounded-circle me-2 my-auto' width={30}></img>
-						<h3 className='text-center my-auto'>{auth.currentUser.displayName}</h3>
-					</span>
-					<button className="btn btn-secondary" onClick={() => signOut(auth)}>Sign Out: {user.email}</button>
-				</div>
-			</nav>
-			<main className="container">
-				{lobbyId ? <Game firestore={firestore} lobbyId={lobbyId} leaveLobby={leaveLobby} players={players} user={user} readyPlayer={readyPlayer} /> : <Lobby handleJoinLobby={handleJoinLobby} handleCreateLobby={handleCreateLobby} />}
-			</main>
-		</div>
+		<>
+			{lobbyId ?
+				<Game firestore={firestore} lobbyId={lobbyId} leaveLobby={leaveLobby} players={players} user={user} readyPlayer={readyPlayer} signOutUser={signOutUser}/>
+				:
+				<Lobby handleJoinLobby={handleJoinLobby} handleCreateLobby={handleCreateLobby} user={user} signOutUser={signOutUser}/>
+			}
+		</>
 	)
 }
 
