@@ -1,7 +1,7 @@
 import Lobby from "./Lobby";
 import Game from "./Game";
 import { useState, useEffect } from "react";
-import { collection, doc, deleteDoc, setDoc, query, onSnapshot, where, getDoc, updateDoc, addDoc, getDocs } from "firebase/firestore";
+import { collection, doc, deleteDoc, setDoc, query, onSnapshot, updateDoc, addDoc, getDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
@@ -58,7 +58,6 @@ function SignIn() {
 					</div>
 				</div>
 			</div>
-
 		</div>
 	)
 }
@@ -107,7 +106,7 @@ function Home(props) {
 
 	async function readyPlayer(ready) {
 		const docRef = doc(firestore, "lobbies", lobbyId, "players", user.email);
-		
+
 		await updateDoc(docRef, {
 			ready: !ready
 		});
@@ -129,9 +128,19 @@ function Home(props) {
 	}
 
 	function handleJoinLobby(lobbyId) {
-		// Set the lobby ID, which will trigger the useEffect
-		// to add the player to the lobby
-		setLobbyId(lobbyId);
+		// Check if lobby exists
+		const lobbyRef = doc(firestore, "lobbies", lobbyId);
+		getDoc(lobbyRef).then((doc) => {
+			if (doc.exists()) {
+				// Set the lobby ID, which will trigger the useEffect
+				// to add the player to the lobby
+				setLobbyId(lobbyId);
+			} else {
+				alert("Lobby does not exist");
+			}
+		}).catch((error) => {
+			console.log("Error getting document:", error);
+		});
 	}
 
 	function leaveLobby() {
@@ -146,12 +155,7 @@ function Home(props) {
 		handleJoinLobby(lobbyRef.id);
 	}
 
-	function handleStartGame() {
-		// Start the game
-		const gameRef = setDoc(doc(firestore, "games", lobbyId), {
-			gameState: "STARTED",
-		});
-	}
+
 
 	return (
 		<div>

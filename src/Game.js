@@ -1,8 +1,30 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import { doc, setDoc } from "firebase/firestore";
 // import { doc, onSnapshot } from "firebase/firestore";
 
 export default function Game(props) {
-    const { lobbyId, leaveLobby, players, user, readyPlayer } = props;
+    const { lobbyId, leaveLobby, players, user, readyPlayer, firestore } = props;
+    // Check if all players are ready
+    const [gameState, setGameState] = useState([]);
+	
+    useEffect(() => {
+		let allReady = true;
+		if (players.length > 1) {
+			players.forEach((player) => {
+				if (!player.ready) {
+					allReady = false;
+				}
+			})
+			// If all players are ready, start the game
+			if (allReady) {
+				setGameState("GAME");
+			}
+			else {
+				setGameState("LOBBY");
+			}
+		}
+	}, [players]);
+
     return (
         <div>
             <h2>Your lobby ID is: {lobbyId}</h2>
