@@ -122,7 +122,7 @@ function Home(props) {
 			name: user.displayName,
 			ready: false,
 			image: user.photoURL,
-			email: user.email
+			email: user.email,
 		});
 		// There is a listener on the players collection that will update the players state
 	}
@@ -152,10 +152,19 @@ function Home(props) {
 		console.log("Creating Lobby");
 		const lobbyRef = await addDoc(collection(firestore, "lobbies"), {
 		})
+		// Set the lobby gameLeader email to the current user's email
 		handleJoinLobby(lobbyRef.id);
+		setGameLeader(lobbyRef.id);
 	}
 
-
+	async function setGameLeader(lobbyId){
+		const lobbyRef = doc(firestore, "lobbies", lobbyId);
+		await updateDoc(lobbyRef, {
+			gameLeader: {email: user.email,
+						name: user.displayName,
+						image: user.photoURL}
+		});
+	}
 
 	return (
 		<div>

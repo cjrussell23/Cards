@@ -1,32 +1,94 @@
 import React, { useEffect, useState } from 'react'
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 // import { doc, onSnapshot } from "firebase/firestore";
 
 export default function Game(props) {
     const { lobbyId, leaveLobby, players, user, readyPlayer, firestore } = props;
-    // Check if all players are ready
+
+    const [gameLeader, setGameLeader] = useState("");
     const [gameState, setGameState] = useState([]);
-	
+
     useEffect(() => {
-		let allReady = true;
-		if (players.length > 1) {
-			players.forEach((player) => {
-				if (!player.ready) {
-					allReady = false;
-				}
-			})
-			// If all players are ready, start the game
-			if (allReady) {
-				setGameState("GAME");
-			}
-			else {
-				setGameState("LOBBY");
-			}
-		}
-	}, [players]);
+        getGameLeader();
+    }, []);
+
+    useEffect(() => {
+        let allReady = true;
+        if (players.length > 1) {
+            players.forEach((player) => {
+                if (!player.ready) {
+                    allReady = false;
+                }
+            })
+            // If all players are ready, start the game
+            if (allReady) {
+                setGameState("GAME");
+            }
+            else {
+                setGameState("LOBBY");
+            }
+        }
+    }, [players]);
+
+    useEffect(() => {
+        if (gameLeader.email === user.email) {
+            // User is the game leader
+            if (gameState === "GAME") {
+                // Start the game
+                console.log("Starting the game");
+                dealCards();
+            }
+        }
+    }, [gameState]);
+
+    async function getGameLeader() {
+        await getDoc(doc(firestore, "lobbies", lobbyId)).then((doc) => {
+            if (doc.exists()) {
+                setGameLeader(doc.data().gameLeader);
+            } else {
+                console.log("No such document!");
+            }
+        }).catch((error) => {
+            console.log("Error getting document:", error);
+        });
+    }
+
+    function dealCards() {
+        const deck = createDeck();
+        const shuffledDeck = shuffle(deck);
+        players.forEach((player) => {
+            const hand = shuffledDeck.splice(0, 5);
+            console.log(deck);
+            setDoc(doc(firestore, "lobbies", lobbyId, "players", player.email), {
+                hand: hand
+            }, { merge: true });
+        }
+        )
+    }
+
+    function createDeck() {
+        const SUITS = ["♠", "♥", "♦", "♣"];
+        const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+        const DECK = [];
+        for (let i = 0; i < SUITS.length; i++) {
+            for (let j = 0; j < RANKS.length; j++) {
+                DECK.push(RANKS[j] + SUITS[i]);
+            }
+        }
+        return DECK;
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
 
     return (
         <div>
+            <h1>{gameLeader.name}'s Game</h1>
             <h2>Your lobby ID is: {lobbyId}</h2>
             <p>Give this to your friends so they can join!</p>
             <form>
@@ -44,7 +106,17 @@ export default function Game(props) {
                                 <img src={player.image} alt={`${player.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
                                 <div className='card-body'>
                                     <h5 className='card-title'>{player.name}</h5>
-                                    {user.email === player.email ? <button onClick={ () => {readyPlayer(player.ready)} }>{player.ready ? "Ready" : "Not Ready"}</button> : <p className='card-text'>{player.ready ? "Ready" : "Not Ready"}</p>}
+                                    {user.email === player.email ?
+                                        <div>
+                                            <button onClick={() => { readyPlayer(player.ready) }}>{player.ready ? "Ready" : "Not Ready"}</button>
+                                            <p>{player?.hand}</p>
+                                        </div>
+                                        :
+                                        <div>
+                                            <p className='card-text'>{player.ready ? "Ready" : "Not Ready"}</p>
+                                            <p>{player?.hand?.length}</p>
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </li>
