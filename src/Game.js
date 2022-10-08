@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import Nav from './Nav';
+import './modal.css';
 
 // This is the main component for the game
 // Rendered when the user is in a lobby
@@ -88,39 +89,58 @@ export default function Game(props) {
         return array;
     }
 
+    function toggleModal() {
+        const display = document.getElementById("modal").style.display;
+        document.getElementById("modal").style.display = display === "none" ? "block" : "none";
+    }
+
     return (
         <>
-            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby}/>
-            <main>
-                <h1>{gameLeader.name}'s Game</h1>
-                <h2>Your lobby ID is: {lobbyId}</h2>
-                <p>Give this to your friends so they can join!</p>
-                <div>
-                    <h2>Players</h2>
-                    <ul className='list-group list-group-horizontal'>
-                        {players.map((player) => {
-                            return <li key={player.email}>
-                                <div className='card'>
-                                    <img src={player.image} alt={`${player.name} profile`} className="rounded-circle" height="50px" width="50px" referrerpolicy="no-referrer" referrerPolicy="no-referrer"></img>
-                                    <div className='card-body'>
-                                        <h5 className='card-title'>{player.name}</h5>
-                                        {user.email === player.email ?
-                                            <div>
-                                                <button onClick={() => { readyPlayer(player.ready) }}>{player.ready ? "Ready" : "Not Ready"}</button>
-                                                <p>{player?.hand}</p>
-                                            </div>
-                                            :
-                                            <div>
-                                                <p className='card-text'>{player.ready ? "Ready" : "Not Ready"}</p>
-                                                <p>{player?.hand?.length}</p>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </li>
-                        })}
-                    </ul>
+            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} toggleModal={toggleModal} />
+            <div id='modal'>
+                <div id='modal-content'>
+                    <div id='modal-header'>
+                        <h3>{gameLeader.name}'s Game</h3>
+                        <button className='btn btn-close' onClick={toggleModal}></button>
+                    </div>
+                    <div>
+                        <p>Your Lobby ID is: {lobbyId}</p>
+                        <p>Give this to your friends so they can join your lobby!</p>
+                    </div>
                 </div>
+            </div>
+            <main>
+                {gameState === "LOBBY" ?
+                    <div>
+                        <ul className='list-group list-group-horizontal'>
+                            {players.map((player) => {
+                                return <li key={player.email}>
+                                    <div className='card'>
+                                        <img src={player.image} alt={`${player.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
+                                        <div className='card-body'>
+                                            <h5 className='card-title'>{player.name}</h5>
+                                            {user.email === player.email ?
+                                                <div>
+                                                    <button onClick={() => { readyPlayer(player.ready) }}>{player.ready ? "Ready" : "Not Ready"}</button>
+                                                    <p>{player?.hand}</p>
+                                                </div>
+                                                :
+                                                <div>
+                                                    <p className='card-text'>{player.ready ? "Ready" : "Not Ready"}</p>
+                                                    <p>{player?.hand?.length}</p>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </li>
+                            })}
+                        </ul>
+                    </div>
+                    :
+                    <div>
+                        game started
+                    </div>
+                }
             </main>
         </>
     )
