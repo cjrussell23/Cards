@@ -66,6 +66,7 @@ function Home(props) {
 	const { user } = props; // The authenticated user
 	const [lobbyId, setLobbyId] = useState("");
 	const [players, setPlayers] = useState([]);
+	const [gameState, setGameState] = useState([]);
 
 	useEffect(() => {
 		// When there is a lobbyId
@@ -73,13 +74,23 @@ function Home(props) {
 			// add the player to the lobby
 			addPlayer();
 			// And subscribe to the lobby's players
-			const q = query(collection(firestore, "lobbies", lobbyId, "players"));
-			onSnapshot(q, (querySnapshot) => {
+			const pq = query(collection(firestore, "lobbies", lobbyId, "players"));
+			onSnapshot(pq, (querySnapshot) => {
 				const firestorePlayers = [];
 				querySnapshot.forEach((doc) => {
 					firestorePlayers.push(doc.data());
 				});
 				setPlayers(firestorePlayers);
+			});
+			// Subscribe to the lobby's game state
+			const gq = query(collection(firestore, "lobbies", lobbyId, "gameState"));
+			onSnapshot(gq, (querySnapshot) => {
+				const firestoreGameState = [];
+				querySnapshot.forEach((doc) => {
+					firestoreGameState.push(doc.data());
+				});
+				setGameState(firestoreGameState);
+				console.log("gameState updated to: ",  gameState);
 			});
 			// If the user closes the tab, remove them from the lobby
 			window.addEventListener('beforeunload', (e) => {
@@ -149,22 +160,31 @@ function Home(props) {
 
 	async function handleCreateLobby() {
 		// Create a new lobby then join it
-		console.log("Creating Lobby");
+		
+		// Create a new lobby in the firestore database
 		const lobbyRef = await addDoc(collection(firestore, "lobbies"), {
 		})
+		// Set the initial game phase
+		await setDoc(doc(firestore, "lobbies", lobbyRef.id, "gameState", "gamePhase"), {
+			phase: "lobby"
+		});
+		// Set the deck to blank
+		await setDoc(doc(firestore, "lobbies", lobbyRef.id, "gameState", "deck"), {
+			deck: [],
+			discard: []
+		});
+		console.log("Creating Lobby: " + lobbyRef.id);
 		// Set the lobby gameLeader email to the current user's email
 		handleJoinLobby(lobbyRef.id);
 		setGameLeader(lobbyRef.id);
 	}
 
 	async function setGameLeader(lobbyId) {
-		const lobbyRef = doc(firestore, "lobbies", lobbyId);
-		await updateDoc(lobbyRef, {
-			gameLeader: {
-				email: user.email,
-				name: user.displayName,
-				image: user.photoURL
-			}
+		const lobbyRef = doc(firestore, "lobbies", lobbyId, "gameState", "gameLeader");
+		await setDoc(lobbyRef, {
+			email: user.email,
+			name: user.displayName,
+			image: user.photoURL
 		});
 	}
 
@@ -175,7 +195,7 @@ function Home(props) {
 	return (
 		<>
 			{lobbyId ?
-				<Game firestore={firestore} lobbyId={lobbyId} leaveLobby={leaveLobby} players={players} user={user} readyPlayer={readyPlayer} signOutUser={signOutUser}/>
+				<Game firestore={firestore} lobbyId={lobbyId} leaveLobby={leaveLobby} players={players} user={user} readyPlayer={readyPlayer} signOutUser={signOutUser} gameState={gameState} />
 				:
 				<Lobby handleJoinLobby={handleJoinLobby} handleCreateLobby={handleCreateLobby} user={user} signOutUser={signOutUser}/>
 			}

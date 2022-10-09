@@ -1,0 +1,146 @@
+body {
+    padding: 0;
+    margin: 0;
+    background: #f0f0f0;
+}
+
+.playing-cards {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.playing-card {
+    position: relative;
+    display: inline-block;
+    width: 172px;
+    height: 240px;
+    font: 16px 'Trebuchet MS';
+    margin: 10px;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+}
+
+.playing-card:before,
+.playing-card:after {
+    content: attr(value);
+    position: absolute;
+    width: 12px;
+    text-align: center;
+    letter-spacing: -2px;
+}
+
+.playing-card:before {
+    top: 4px;
+    left: 4px;
+}
+
+.playing-card:after {
+    bottom: 4px;
+    right: 4px;
+    transform: rotate(180deg);
+}
+
+.playing-card--♥ {
+    color: #e44145;
+}
+
+.playing-card--♥:before,
+.playing-card--♥:after {
+    content: attr(value) ' ♥';
+}
+
+.playing-card--♦ {
+    color: #e44145;
+}
+
+.playing-card--♦:before,
+.playing-card--♦:after {
+    content: attr(value) '♦';
+}
+
+.playing-card--♠ {
+    color: #252525;
+}
+
+.playing-card--♠:before,
+.playing-card--♠:after {
+    content: attr(value) ' ♠';
+}
+
+.playing-card--♣ {
+    color: #252525;
+}
+
+.playing-card--♣:before,
+.playing-card--♣:after {
+    content: attr(value) ' ♣';
+}
+
+.playing-card__inner {
+    box-sizing: border-box;
+    position: absolute;
+    display: flex;
+    justify-content: space-between;
+    top: 24px;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+}
+
+.playing-card__inner--centered {
+    justify-content: center;
+}
+
+.playing-card__column {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.playing-card__column--centered {
+    justify-content: center;
+}
+
+.playing-card__symbol {
+    display: inline-block;
+    height: 40px;
+    text-align: center;
+}
+
+.playing-card__symbol:before {
+    font-size: 40px;
+    line-height: 40px;
+}
+
+.playing-card--♥ .playing-card__symbol:before {
+    content: '♥';
+}
+
+.playing-card--♠ .playing-card__symbol:before {
+    content: '♠';
+}
+
+.playing-card__symbol--rotated,
+.playing-card__symbol:last-of-type {
+    transform: rotate(180deg);
+}
+
+.playing-card__symbol:first-of-type {
+    transform: rotate(0);
+}
+
+.playing-card__symbol--big {
+    flex-basis: 60px;
+}
+
+.playing-card__symbol--huge {
+    flex-basis: 108px;
+}
+
+.title {
+    font: 18px 'Trebuchet MS';
+    color: #444;
+    text-align: center;
+}
