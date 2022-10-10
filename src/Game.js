@@ -18,7 +18,10 @@ export default function Game(props) {
     useEffect(() => {
         // Game leader is set in the lobby/App component
         getGameLeader(); // This gets the leader from the database
-        openLobbyInfo(); // This opens the lobby info modal
+        const lobbyIdButton = document.getElementById("lobbyIdButton");
+        if (gameLeader.email === user.email) {
+            lobbyIdButton.click();
+        }
     }, []);
 
     useEffect(() => {
@@ -107,26 +110,6 @@ export default function Game(props) {
         return array;
     }
 
-    function openLobbyInfo() {
-        console.log("openLobbyInfo");
-        const parent = document.getElementById("lobbyInfo").parentElement;
-        document.getElementById("lobbyInfo").style.display = "block";
-        parent.addEventListener("click", togglelobbyInfo);
-    }
-
-    function togglelobbyInfo() {
-        const display = document.getElementById("lobbyInfo").style.display;
-        const parent = document.getElementById("lobbyInfo").parentElement;
-        if (display === "block") { // Toggle off
-            parent.removeEventListener("click", togglelobbyInfo);
-            document.getElementById("lobbyInfo").style.display = "none";
-        }
-        else { // Toggle on
-            document.getElementById("lobbyInfo").style.display = "block";
-            parent.addEventListener("click", togglelobbyInfo);
-        }
-    }
-
     function playCard(card) {
         const playerHand = player.hand;
         const discard = gameState[0]?.discard;
@@ -171,19 +154,7 @@ export default function Game(props) {
 
     return (
         <>
-            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} togglelobbyInfo={togglelobbyInfo} />
-            <div id='lobbyInfo'>
-                <div id='lobbyInfo-content'>
-                    <div id='lobbyInfo-header'>
-                        <h3>{gameLeader.name}'s Game</h3>
-                        <button className='btn btn-close'></button>
-                    </div>
-                    <div>
-                        <p>Your Lobby ID is: {lobbyId} <button onClick={() => navigator.clipboard.writeText(lobbyId)}>Copy to Clipboard</button></p>
-                        <p>Give this to your friends so they can join your lobby!</p>
-                    </div>
-                </div>
-            </div>
+            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} lobbyId={lobbyId}/>
             <main id='main'>
                 {gameState[2]?.phase === "lobby" &&
                     <div>

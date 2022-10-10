@@ -13,3 +13,7 @@ main {
     width: fit-content;
     padding: 10px;
 }
+
+.shadow {
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.226);
+}
