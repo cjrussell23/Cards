@@ -18,6 +18,7 @@ export default function Game(props) {
     useEffect(() => {
         // Game leader is set in the lobby/App component
         getGameLeader(); // This gets the leader from the database
+        toggleModal(); // This opens the modal
     }, []);
 
     useEffect(() => {
@@ -108,7 +109,15 @@ export default function Game(props) {
 
     function toggleModal() {
         const display = document.getElementById("modal").style.display;
-        document.getElementById("modal").style.display = display === "none" ? "block" : "none";
+        const parent = document.getElementById("modal").parentElement;
+        if (display === "block") { // Toggle off
+            parent.removeEventListener("click", toggleModal);
+            document.getElementById("modal").style.display = "none";
+        }
+        else { // Toggle on
+            document.getElementById("modal").style.display = "block";
+            parent.addEventListener("click", toggleModal);
+        }
     }
 
     function playCard(card) {
@@ -160,15 +169,15 @@ export default function Game(props) {
                 <div id='modal-content'>
                     <div id='modal-header'>
                         <h3>{gameLeader.name}'s Game</h3>
-                        <button className='btn btn-close' onClick={toggleModal}></button>
+                        <button className='btn btn-close'></button>
                     </div>
                     <div>
-                        <p>Your Lobby ID is: {lobbyId}</p>
+                        <p>Your Lobby ID is: {lobbyId} <button onClick={() => navigator.clipboard.writeText(lobbyId)}>Copy to Clipboard</button></p>
                         <p>Give this to your friends so they can join your lobby!</p>
                     </div>
                 </div>
             </div>
-            <main>
+            <main id='main'>
                 {gameState[2]?.phase === "lobby" &&
                     <div>
                         <ul className='list-group list-group-horizontal'>
