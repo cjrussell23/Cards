@@ -104,15 +104,19 @@ function Home(props) {
 	async function removePlayerFromLobby() {
 		// Save the lobby id so we can delete the player and lobby
 		const prevLobbyId = lobbyId;
+		// Delete the lobby if there are no more players
+		if (players.length <= 1) {
+			console.log("Deleting lobby");
+			await deleteDoc(doc(firestore, "lobbies", prevLobbyId));
+		}
+		else {
+			// Delete the player from the lobby in the database
+			await deleteDoc(doc(firestore, "lobbies", prevLobbyId, "players", user.email));
+		}
 		// Clear the state related to the lobby
 		setLobbyId(""); // This will trigger the useEffect to remove the player from the lobby
 		setPlayers([]);
-		// Delete the player from the lobby in the database
-		await deleteDoc(doc(firestore, "lobbies", prevLobbyId, "players", user.email));
-		// Delete the lobby if there are no more players
-		if (players.length < 1) {
-			await deleteDoc(doc(firestore, "lobbies", prevLobbyId));
-		}
+		setGameState([]);
 	}
 
 	async function readyPlayer(ready) {
