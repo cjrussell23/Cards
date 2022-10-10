@@ -7,6 +7,7 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
 
 // import { getAnalytics } from "firebase/analytics";
 
@@ -29,7 +30,7 @@ const auth = getAuth(app);
 function App() {
 	const [user] = useAuthState(auth);
 	return (
-		<div className="App">
+		<div className="App bg-light">
 			{user ? <Home user={user} /> : <SignIn />}
 		</div >
 	);

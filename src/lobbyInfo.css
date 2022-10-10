@@ -1,4 +1,4 @@
-#modal {
+#lobbyInfo {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
     z-index: 1; /* Sit on top */
@@ -11,7 +11,7 @@
     background-color: rgb(0,0,0); /* Fallback color */
     background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
-#modal-content {
+#lobbyInfo-content {
     background-color: #ffffff;
     margin: auto;
     padding: 20px;

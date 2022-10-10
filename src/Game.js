@@ -3,7 +3,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import Nav from './Nav';
 import Card from "react-free-playing-cards/lib/TcN.js"
 // import Card from './Card';
-import './modal.css';
+import './lobbyInfo.css';
 
 // This is the main component for the game
 // Rendered when the user is in a lobby
@@ -18,7 +18,7 @@ export default function Game(props) {
     useEffect(() => {
         // Game leader is set in the lobby/App component
         getGameLeader(); // This gets the leader from the database
-        toggleModal(); // This opens the modal
+        openLobbyInfo(); // This opens the lobby info modal
     }, []);
 
     useEffect(() => {
@@ -107,16 +107,23 @@ export default function Game(props) {
         return array;
     }
 
-    function toggleModal() {
-        const display = document.getElementById("modal").style.display;
-        const parent = document.getElementById("modal").parentElement;
+    function openLobbyInfo() {
+        console.log("openLobbyInfo");
+        const parent = document.getElementById("lobbyInfo").parentElement;
+        document.getElementById("lobbyInfo").style.display = "block";
+        parent.addEventListener("click", togglelobbyInfo);
+    }
+
+    function togglelobbyInfo() {
+        const display = document.getElementById("lobbyInfo").style.display;
+        const parent = document.getElementById("lobbyInfo").parentElement;
         if (display === "block") { // Toggle off
-            parent.removeEventListener("click", toggleModal);
-            document.getElementById("modal").style.display = "none";
+            parent.removeEventListener("click", togglelobbyInfo);
+            document.getElementById("lobbyInfo").style.display = "none";
         }
         else { // Toggle on
-            document.getElementById("modal").style.display = "block";
-            parent.addEventListener("click", toggleModal);
+            document.getElementById("lobbyInfo").style.display = "block";
+            parent.addEventListener("click", togglelobbyInfo);
         }
     }
 
@@ -164,10 +171,10 @@ export default function Game(props) {
 
     return (
         <>
-            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} toggleModal={toggleModal} />
-            <div id='modal'>
-                <div id='modal-content'>
-                    <div id='modal-header'>
+            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} togglelobbyInfo={togglelobbyInfo} />
+            <div id='lobbyInfo'>
+                <div id='lobbyInfo-content'>
+                    <div id='lobbyInfo-header'>
                         <h3>{gameLeader.name}'s Game</h3>
                         <button className='btn btn-close'></button>
                     </div>
