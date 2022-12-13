@@ -6,9 +6,10 @@ import RulesButton from "./RulesButton";
 export default function Lobby(props) {
     const { handleJoinLobby, handleCreateLobby, user, signOutUser } = props;
     const lobbyIdRef = useRef();
+    const createlobbyIdRef = useRef();
 
     function createLobby() {
-        handleCreateLobby();
+        handleCreateLobby(createlobbyIdRef.current.value);
     }
 
     function joinLobby() {
@@ -43,7 +44,12 @@ export default function Lobby(props) {
                             e.preventDefault();
                             createLobby();
                         }}>
-                            <button type="submit" className="btn btn-success">Create</button>
+                            {/* Input for optional lobbyCode */}
+                            <div className="input-group mb-3">
+                                <span className="input-group-text">Lobby ID:</span>
+                                <input className="ps-2" type="text" id="lobbyCode" placeholder="Auto-generated if empty" ref={createlobbyIdRef}/>
+                                <button type="submit" className="btn btn-success">Create</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -51,11 +57,11 @@ export default function Lobby(props) {
                 <div className="Join mt-2">
                     <div className="card d-flex flex-column align-items-center justify-content-center">
                         <h2>Join Game</h2>
-                        <button onClick={pasteID} className='btn btn-success mb-2'>Paste LobbyID</button>
+                        <button onClick={pasteID} className='btn btn-primary mb-2'>Paste LobbyID</button>
                         <form className="input-group">
                             <span className="input-group-text">Lobby ID:</span>
                             <input className="ps-2" type="text" id="lobbyId" placeholder="Enter Lobby ID" ref={lobbyIdRef}/>
-                            <button className="btn btn-primary" type="submit" onClick={(e) => {
+                            <button className="btn btn-success" type="submit" onClick={(e) => {
                                 e.preventDefault();
                                 joinLobby();
                             }}>Join</button>

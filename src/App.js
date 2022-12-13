@@ -163,12 +163,19 @@ function Home(props) {
 		removePlayerFromLobby();
 	}
 
-	async function handleCreateLobby() {
+	async function handleCreateLobby(lobbyID) {
 		// Create a new lobby then join it
 		
 		// Create a new lobby in the firestore database
-		const lobbyRef = await addDoc(collection(firestore, "lobbies"), {
+		var lobbyRef;
+		if (lobbyID) {
+			console.log("Creating Lobby: " + lobbyID)
+			await setDoc(doc(firestore, "lobbies", lobbyID), {});
+			lobbyRef = doc(firestore, "lobbies", lobbyID);
+		}
+		else lobbyRef = await addDoc(collection(firestore, "lobbies"), {
 		})
+		console.log(lobbyRef);
 		// Set the initial game phase
 		await setDoc(doc(firestore, "lobbies", lobbyRef.id, "gameState", "gamePhase"), {
 			phase: "lobby"
