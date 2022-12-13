@@ -15,6 +15,19 @@ export default function Lobby(props) {
         handleJoinLobby(lobbyIdRef.current.value);
     }
 
+    function pasteID(){
+        navigator.clipboard
+                    .readText()
+                    .then(
+                        cliptext =>
+                        (document.getElementById('lobbyId').value = cliptext),
+                            err => {
+                                console.log("Something went wrong", err);
+                                alert("Something went wrong");
+                            }
+                    );
+    }
+
     return (
         <>
             <Nav user={user} signOutUser={signOutUser} />
@@ -38,9 +51,10 @@ export default function Lobby(props) {
                 <div className="Join mt-2">
                     <div className="card d-flex flex-column align-items-center justify-content-center">
                         <h2>Join Game</h2>
+                        <button onClick={pasteID} className='btn btn-success mb-2'>Paste LobbyID</button>
                         <form className="input-group">
                             <span className="input-group-text">Lobby ID:</span>
-                            <input className="ps-2" type="text" id="lobbyId" placeholder="Enter Lobby ID" ref={lobbyIdRef} />
+                            <input className="ps-2" type="text" id="lobbyId" placeholder="Enter Lobby ID" ref={lobbyIdRef}/>
                             <button className="btn btn-primary" type="submit" onClick={(e) => {
                                 e.preventDefault();
                                 joinLobby();

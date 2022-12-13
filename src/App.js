@@ -7,6 +7,7 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.js';
 import './App.css';
 
 // import { getAnalytics } from "firebase/analytics";
@@ -91,7 +92,6 @@ function Home(props) {
 					firestoreGameState.push(doc.data());
 				});
 				setGameState(firestoreGameState);
-				console.log("gameState updated to: ",  gameState);
 			});
 			// If the user closes the tab, remove them from the lobby
 			window.addEventListener('beforeunload', (e) => {
