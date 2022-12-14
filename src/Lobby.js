@@ -45,7 +45,7 @@ export default function Lobby(props) {
                 <p>This is a website for playing Crazy Eights with your friends.</p>
                 <p>At any time you can click the <RulesButton /> button in the nav bar to see the rules for the game.</p>
                 <p>Click the button below to create a new lobby.</p>
-                <div className="Create mt-2 mb-5">
+                <div className="mt-2 mb-5">
                     <div className="card">
                         <h2>Create Game</h2>
                         <form onSubmit={(e) => {
@@ -53,23 +53,23 @@ export default function Lobby(props) {
                             createLobby();
                         }}>
                             {/* Input for optional lobbyCode */}
-                            <div className="input-group mb-3">
+                            <div className="input-group d-flex flex-nowrap mb-3">
                                 <span className="input-group-text">Lobby ID:</span>
-                                <input className="ps-2" type="text" id="lobbyCode" placeholder="Auto-generated if empty" ref={createlobbyIdRef}/>
-                                <button type="submit" className="btn btn-success">Create</button>
+                                <input className="ps-2 text-box flex-grow-1" type="text" id="lobbyCode" placeholder="Optional" ref={createlobbyIdRef}/>
+                                <button type="submit" className="btn btn-success flex-shrink-1">Create</button>
                             </div>
                         </form>
                     </div>
                 </div>
                 <p>Or Join your friends lobby with the Lobby ID they gave you.</p>
-                <div className="Join mt-2">
+                <div className="mt-2">
                     <div className="card d-flex flex-column align-items-center justify-content-center">
                         <h2>Join Game</h2>
                         <button onClick={pasteID} className='btn btn-primary mb-2'>Paste LobbyID</button>
-                        <form className="input-group">
-                            <span className="input-group-text">Lobby ID:</span>
-                            <input className="ps-2" type="text" id="lobbyId" placeholder="Enter Lobby ID" ref={lobbyIdRef}/>
-                            <button className="btn btn-success" type="submit" onClick={(e) => {
+                        <form className="input-group d-flex flex-nowrap">
+                            <span className="input-group-text flex-shrink-1">Lobby ID:</span>
+                            <input className="ps-2 text-box flex-grow-1" type="text" id="lobbyId" placeholder="Enter Lobby ID" ref={lobbyIdRef}/>
+                            <button className="btn btn-success flex-shrink-1" type="submit" onClick={(e) => {
                                 e.preventDefault();
                                 joinLobby();
                             }}>Join</button>

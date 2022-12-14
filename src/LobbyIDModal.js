@@ -1,4 +1,5 @@
 import React from 'react'
+import "./App.css"
 
 export default function LobbyIDModal(props) {
     const { lobbyId } = props;
@@ -11,10 +12,10 @@ export default function LobbyIDModal(props) {
                         <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div className="modal-body">
-                        <div className='input-group mb-3'>
-                            <span className='input-group-text'>Your Lobby ID is: </span>
-                            <span className='input-group-text bg-white'>{lobbyId} </span>
-                            <button className='btn btn-primary form-control' onClick={() => navigator.clipboard.writeText(lobbyId)}>Copy</button>
+                        <div className='input-group mb-3 d-flex flex-nowrap'>
+                            <span className='input-group-text'>Lobby ID: </span>
+                            <span className='input-group-text bg-white text-box flex-grow-1'>{lobbyId} </span>
+                            <button className='btn btn-primary flex-shrink-1 form-control' onClick={() => navigator.clipboard.writeText(lobbyId)}>Copy</button>
                         </div>
                         <p className='text-center'>Give this to your friends so they can join your lobby!</p>
                     </div>

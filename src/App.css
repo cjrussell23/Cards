@@ -88,3 +88,15 @@ main {
     90% { transform: translate(1px, 2px) rotate(0deg); }
     100% { transform: translate(1px, -2px) rotate(-1deg); }
 }
+
+/* Screen size > 450px */
+@media screen and (min-width: 450px) {
+    .text-box {
+        width: 300px;
+    }
+}
+
+.text-box {
+    overflow: hidden;
+    width: 150px;
+}
