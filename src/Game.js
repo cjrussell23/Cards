@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import React, { useEffect, useState, useRef } from 'react'
+import { connectFirestoreEmulator, doc, getDoc, setDoc } from "firebase/firestore";
 import Nav from './Nav';
 import Card from "react-free-playing-cards/lib/TcN.js";
 
@@ -12,6 +12,13 @@ export default function Game(props) {
     const [player, setPlayer] = useState("");
     const [opponents, setOpponents] = useState([]);
     const [gameLeader, setGameLeader] = useState("");
+    var playersRef = useRef();
+    var canPlayCard = useRef();
+    var pickedUpCardThisTurn = useRef(false);
+
+    useEffect(() => {
+        canPlayCard.current = checkCanPlayCard();
+    }, [gameState]);
 
     useEffect(() => {
         removeCardClassFromImgs();
@@ -23,7 +30,7 @@ export default function Game(props) {
     }, []);
 
     useEffect(() => {
-        if (gameLeader.email === user.email) {
+        if (gameLeader.uuid === user.uuid) {
             const lobbyIdButton = document.getElementById("lobbyIdButton");
             lobbyIdButton.click();
         }
@@ -31,8 +38,12 @@ export default function Game(props) {
 
     useEffect(() => {
         setDBGamePhase(); // This sets the game phase in the database
-        setOpponents(players.filter((player) => player.email !== user.email));
-        setPlayer(players.filter((player) => player.email === user.email)[0]);
+        setOpponents(players.filter((player) => player.uuid !== user.uuid));
+        setPlayer(players.filter((player) => player.uuid === user.uuid)[0]);
+        if (playersRef?.current?.length > players?.length) {
+                leaveLobby();
+        }
+        playersRef.current = players;
     }, [players]);
 
     function removeCardClassFromImgs() {
@@ -55,7 +66,7 @@ export default function Game(props) {
 
     // ONLY FOR GAME LEADER
     function setDBGamePhase() {
-        if (user.email === gameLeader.email) {
+        if (user.uuid === gameLeader.uuid) {
             let allReady = true;
             if ((players.length > 1)) {
                 players.forEach((player) => {
@@ -96,7 +107,7 @@ export default function Game(props) {
         // Deal 8 cards to each player
         players.forEach((player) => {
             const hand = shuffledDeck.splice(0, 8);
-            setDoc(doc(firestore, "lobbies", lobbyId, "players", player.email), {
+            setDoc(doc(firestore, "lobbies", lobbyId, "players", player.uuid), {
                 hand: hand
             }, { merge: true });
         }
@@ -140,7 +151,7 @@ export default function Game(props) {
         const playerHand = player.hand;
         const newHand = playerHand.filter((c) => c !== card);
         const newDiscard = [...discard, card];
-        setDoc(doc(firestore, "lobbies", lobbyId, "players", user.email), {
+        setDoc(doc(firestore, "lobbies", lobbyId, "players", user.uuid), {
             hand: newHand
         }, { merge: true });
         setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "deck"), {
@@ -149,10 +160,11 @@ export default function Game(props) {
     }
 
     function myTurn() {
-        return gameState[2]?.turnPlayer.email === user.email;
+        return gameState[2]?.turnPlayer.uuid === user.uuid;
     }
 
     function setNextPlayerTurn() {
+        if(!myTurn()) return;
         const turnIndex = gameState[2]?.turnIndex;
         const nextTurnIndex = (turnIndex + 1) % players.length;
         const nextTurnPlayer = players[nextTurnIndex];
@@ -160,8 +172,57 @@ export default function Game(props) {
             turnPlayer: nextTurnPlayer,
             turnIndex: nextTurnIndex,
         }, { merge: true });
+        pickedUpCardThisTurn.current = false;
     }
 
+    function nextPlayerPickUpTwo() {
+        const turnIndex = gameState[2]?.turnIndex;
+        const nextTurnIndex = (turnIndex + 1) % players.length;
+        const nextTurnPlayer = players[nextTurnIndex];
+        const deck = gameState[0]?.deck;
+        if (deck.length < 2) {
+            shuffleDeck();
+        }
+        const newHand = [...nextTurnPlayer.hand, deck[deck.length - 1], deck[deck.length - 2]];
+        setDoc(doc(firestore, "lobbies", lobbyId, "players", nextTurnPlayer.uuid), {
+            hand: newHand
+        }, { merge: true });
+        setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "deck"), {
+            deck: deck.splice(0, deck.length - 2),
+        }, { merge: true });
+    }
+
+    function checkCanPlayCard(){
+        // Checks if any of the players cards can be played
+        const discard = gameState[0]?.discard;
+        const playerHand = player?.hand;
+        if (!playerHand) {
+            // console.log("No player hand");
+            return false;
+        }
+        // console.log(playerHand);
+        for (let i=0; i<playerHand.length; i++){
+            if (playerHand[i][0] === "8") {
+                // console.log("8");
+                return true;
+            }
+            if(!discard[discard.length -1]){
+                // console.log("No discard");
+                return true;
+            }
+            if (discard[discard.length - 1][0] === playerHand[i][0] || discard[discard.length - 1][1] === playerHand[i][1]) {
+                // console.log("Match");
+                return true; // If card suits or ranks match, return true
+            }
+            if (discard[discard.length - 1][0] === "8") {
+                if (gameState[3]?.suit === playerHand[i][1]) {
+                    // console.log("Suit match wildcard");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
     function playCard(card, event) {
         // Check if it is the players turn
@@ -177,18 +238,20 @@ export default function Game(props) {
             pickSuitButton.click();
             playCardDB(card);
         }
-        else if (discard[discard.length - 1][0] === card[0] || discard[discard.length - 1][1] === card[1]) {
+        else if (discard[discard.length-1][0] != "8" && (discard[discard.length - 1][0] === card[0] || discard[discard.length - 1][1] === card[1])) {
             // If the card is playable, play it
             playCardDB(card);
+            if(card[0] === "2") nextPlayerPickUpTwo();
         }
         else if (discard[discard.length - 1][0] === "8") {
             // Check if the db wild suit is the same as the card suit
             if (gameState[3]?.suit === card[1]) {
                 playCardDB(card);
-                setWildSuit("");
+                setWildSuit(null);
+                if(card[0] === "2") nextPlayerPickUpTwo();
             }
             else {
-                console.log(card, gameState[3]);
+                // console.log(card, gameState[3]);
                 event.target.classList.add("shake");
                 setTimeout(() => {
                     event.target.classList.remove("shake");
@@ -196,7 +259,7 @@ export default function Game(props) {
             }
         }
         else {
-            console.log(card, discard[discard.length - 1]);
+            // console.log(card, discard[discard.length - 1]);
             event.target.classList.add("shake");
             setTimeout(() => {
                 event.target.classList.remove("shake");
@@ -212,16 +275,23 @@ export default function Game(props) {
         if (!myTurn()) {
             return;
         }
+        if (canPlayCard.current) {
+            return;
+        }
+        if (pickedUpCardThisTurn.current) {
+            return;
+        }
         const deck = gameState[0]?.deck;
         const playerHand = player.hand;
         const newHand = [...playerHand, deck[0]];
         const newDeck = deck.splice(1);
-        await setDoc(doc(firestore, "lobbies", lobbyId, "players", user.email), {
+        await setDoc(doc(firestore, "lobbies", lobbyId, "players", user.uuid), {
             hand: newHand
         }, { merge: true });
         await setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "deck"), {
             deck: newDeck
         }, { merge: true });
+        pickedUpCardThisTurn.current = true;
     }
 
     async function shuffleDeck() {
@@ -266,12 +336,12 @@ export default function Game(props) {
                         <h2>Players:</h2>
                         <ul className='list-group'>
                             {players.map((player) => {
-                                return <li key={player.email} className='list-group-item'>
+                                return <li key={player.uuid} className='list-group-item'>
                                     <div className='d-flex align-items-center gap-3'>
                                         <img src={player.image} alt={`${player.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
                                         <h5 className=''>{player.name}</h5>
                                         <div className=''>
-                                            {user.email === player.email ?
+                                            {user.uuid === player.uuid ?
                                                 <div>
                                                     {player.ready ?
                                                         <button className='btn btn-success shadow' onClick={() => { readyPlayer(player.ready) }} data-bs-container="body" data-bs-toggle="popover" data-bs-placement="right" data-bs-content="Right popover">Ready</button>
@@ -302,7 +372,7 @@ export default function Game(props) {
                     <div id='game-board'>
                         {/* Turn indicator */}
                         <div className='d-flex justify-content-center' id='turn-indicator'>
-                            {gameState[2]?.turnPlayer?.email === user.email ?
+                            {gameState[2]?.turnPlayer?.uuid === user.uuid ?
                                 <div className='d-flex align-items-center gap-3'>
                                     <img src={gameState[2]?.turnPlayer?.image} alt={`${gameState[2]?.turnPlayer?.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
                                     <h5 className=''>Your Turn!</h5>
@@ -317,7 +387,7 @@ export default function Game(props) {
                         {/* Opponents Hands */}
                         <div className='bg-primary d-flex justify-content-evenly p-2 mt-2' id='opponents-hands'>
                             {opponents.map((opponent) => {
-                                return <div key={opponent.email}>
+                                return <div key={opponent.uuid}>
                                     <div className='d-flex fit-content bg-secondary p-2 gap-2'>
                                         {opponent?.hand?.map((card) => {
                                             return <div key={card} className='card-container'><Card card={card} height="50px" back /></div>
@@ -328,7 +398,7 @@ export default function Game(props) {
                         </div>
                         {/* Table */}
                         <div className='d-flex px-5 py-5 text-bg-light align-items-center justify-content-center'>
-                            {gameState[0]?.deck.length > 0 && <button onClick={drawCard}><Card card={gameState[0]?.deck[0]} height="100px" back /></button>}
+                            {gameState[0]?.deck.length > 0 && <button className={canPlayCard.current ? '' : 'border border-success'} onClick={drawCard}><Card card={gameState[0]?.deck[0]} height="100px" back /></button>}
                             <button onClick={shuffleDeck}><Card card={gameState[0]?.discard[gameState[0]?.discard.length - 1]} height="100px" /></button>
                             {gameState[3]?.suit && <h5 className='text-bg-light text-center ms-2'>Wild Suit:<br></br><img width="50px" src={getSuitImage(gameState[3]?.suit)}></img></h5>}
                         </div>
@@ -340,7 +410,7 @@ export default function Game(props) {
                         </div>
                         {/* Skip turn */}
                         <div className='d-flex justify-content-center'>
-                            <button className='btn btn-danger' onClick={setNextPlayerTurn}>Skip Turn</button>
+                            <button className={!canPlayCard.current && pickedUpCardThisTurn.current ? 'd-flex btn btn-danger' : 'd-none btn btn-danger'} onClick={setNextPlayerTurn}>Skip Turn</button>
                         </div>
                     </div>
                 }

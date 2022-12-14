@@ -1,10 +1,10 @@
 import Lobby from "./Lobby";
 import Game from "./Game";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { collection, doc, deleteDoc, setDoc, query, onSnapshot, updateDoc, addDoc, getDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, signInAnonymously } from "firebase/auth";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.js';
@@ -42,21 +42,33 @@ function SignIn() {
 		const provider = new GoogleAuthProvider();
 		signInWithPopup(auth, provider);
 	}
+	const signInWithAnonymously = () => {
+		signInAnonymously(auth).then(() => {
+			// console.log("Signed in anonymously");
+		}).catch((error) => {
+			console.log(error);
+		});
+	}
 	return (
 		<div id="sign-in">
 			<nav className="navbar navbar-dark bg-primary">
 				<div className="container-fluid">
-					<span className="navbar-brand mb-0 h1">Habits</span>
+					<span className="navbar-brand mb-0 h1">Crazy Eights</span>
 				</div>
 			</nav>
-			<div className="d-flex justify-content-center flex-column align-items-center flex-grow-1">
-				<div className="card col-6">
+			<div className="d-flex justify-content-center flex-column align-items-center flex-grow-1 mt-3">
+				<div className="card p-0">
 					<div className="card-header">
-						<h1 className="text-center">Start Tracking Your Habits</h1>
+						<h1 className="text-center">Crazy Eights</h1>
 					</div>
 					<div className="card-body text-center">
+						<p>Play Crazy Eights with your friends!</p>
 						<p className="card-text">Sign in to continue.</p>
-						<button className="btn btn-primary" onClick={signInWithGoogle}><img src='https://unifysolutions.net/supportedproduct/google-signin/Google__G__Logo.svg' width="30" height="30" alt='Google G Logo'></img> Sign In With Google</button>
+						<div className="d-flex flex-column gap-2">
+							<button className="btn btn-primary d-flex justify-content-evenly" onClick={signInWithGoogle}><img src='https://unifysolutions.net/supportedproduct/google-signin/Google__G__Logo.svg' width="30" height="30" alt='Google G Logo'></img><span>Sign In With Google</span></button>
+							<button className="btn btn-primary d-flex justify-content-evenly" onClick={signInWithAnonymously}><svg width="30" height="30" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><path d="M12 3a4 4 0 1 0 0 8 4 4 0 1 0 0-8z"></path></svg><span>Sign In Anonymously</span></button>
+						</div>
+
 					</div>
 				</div>
 			</div>
@@ -69,6 +81,7 @@ function Home(props) {
 	const [lobbyId, setLobbyId] = useState("");
 	const [players, setPlayers] = useState([]);
 	const [gameState, setGameState] = useState([]);
+	var playerLeftLobby = useRef();
 
 	useEffect(() => {
 		// When there is a lobbyId
@@ -105,23 +118,15 @@ function Home(props) {
 	async function removePlayerFromLobby() {
 		// Save the lobby id so we can delete the player and lobby
 		const prevLobbyId = lobbyId;
-		// Delete the lobby if there are no more players
-		if (players.length <= 1) {
-			console.log("Deleting lobby");
-			await deleteDoc(doc(firestore, "lobbies", prevLobbyId));
-		}
-		else {
-			// Delete the player from the lobby in the database
-			await deleteDoc(doc(firestore, "lobbies", prevLobbyId, "players", user.email));
-		}
-		// Clear the state related to the lobby
+		await deleteDoc(doc(firestore, "lobbies", prevLobbyId, "players", user.uuid));
+		await deleteDoc(doc(firestore, "lobbies", prevLobbyId));
 		setLobbyId(""); // This will trigger the useEffect to remove the player from the lobby
 		setPlayers([]);
 		setGameState([]);
 	}
 
 	async function readyPlayer(ready) {
-		const docRef = doc(firestore, "lobbies", lobbyId, "players", user.email);
+		const docRef = doc(firestore, "lobbies", lobbyId, "players", user.uuid);
 
 		await updateDoc(docRef, {
 			ready: !ready
@@ -134,11 +139,12 @@ function Home(props) {
 			return;
 		}
 		// Create new user in the firestore database using auth properties
-		await setDoc(doc(firestore, "lobbies", lobbyId, "players", user.email), {
+		await setDoc(doc(firestore, "lobbies", lobbyId, "players", user.uuid), {
 			name: user.displayName,
 			ready: false,
 			image: user.photoURL,
 			email: user.email,
+			uuid: user.uuid
 		});
 		// There is a listener on the players collection that will update the players state
 	}
@@ -159,23 +165,24 @@ function Home(props) {
 		});
 	}
 
-	function leaveLobby() {
+	async function leaveLobby() {
+		playerLeftLobby.current = true;
 		removePlayerFromLobby();
 	}
 
 	async function handleCreateLobby(lobbyID) {
 		// Create a new lobby then join it
-		
+
 		// Create a new lobby in the firestore database
 		var lobbyRef;
 		if (lobbyID) {
-			console.log("Creating Lobby: " + lobbyID)
+			// console.log("Creating Lobby: " + lobbyID)
 			await setDoc(doc(firestore, "lobbies", lobbyID), {});
 			lobbyRef = doc(firestore, "lobbies", lobbyID);
 		}
 		else lobbyRef = await addDoc(collection(firestore, "lobbies"), {
 		})
-		console.log(lobbyRef);
+		// console.log(lobbyRef);
 		// Set the initial game phase
 		await setDoc(doc(firestore, "lobbies", lobbyRef.id, "gameState", "gamePhase"), {
 			phase: "lobby"
@@ -185,7 +192,7 @@ function Home(props) {
 			deck: [],
 			discard: []
 		});
-		console.log("Creating Lobby: " + lobbyRef.id);
+		// console.log("Creating Lobby: " + lobbyRef.id);
 		// Set the lobby gameLeader email to the current user's email
 		handleJoinLobby(lobbyRef.id);
 		setGameLeader(lobbyRef.id);
@@ -196,7 +203,8 @@ function Home(props) {
 		await setDoc(lobbyRef, {
 			email: user.email,
 			name: user.displayName,
-			image: user.photoURL
+			image: user.photoURL,
+			uuid: user.uuid
 		});
 	}
 
@@ -207,9 +215,9 @@ function Home(props) {
 	return (
 		<>
 			{lobbyId ?
-				<Game firestore={firestore} lobbyId={lobbyId} leaveLobby={leaveLobby} players={players} user={user} readyPlayer={readyPlayer} signOutUser={signOutUser} gameState={gameState} />
+				<Game firestore={firestore} lobbyId={lobbyId} leaveLobby={leaveLobby} players={players} user={user} readyPlayer={readyPlayer} signOutUser={signOutUser} gameState={gameState}/>
 				:
-				<Lobby handleJoinLobby={handleJoinLobby} handleCreateLobby={handleCreateLobby} user={user} signOutUser={signOutUser}/>
+				<Lobby handleJoinLobby={handleJoinLobby} handleCreateLobby={handleCreateLobby} user={user} signOutUser={signOutUser} playerLeftLobby={playerLeftLobby}/>
 			}
 		</>
 	)

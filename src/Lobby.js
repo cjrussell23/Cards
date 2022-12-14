@@ -1,12 +1,20 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import Nav from "./Nav";
 import RulesButton from "./RulesButton";
 
 // This is the component for joining/creating a lobby
 export default function Lobby(props) {
-    const { handleJoinLobby, handleCreateLobby, user, signOutUser } = props;
+    const { handleJoinLobby, handleCreateLobby, user, signOutUser, playerLeftLobby } = props;
     const lobbyIdRef = useRef();
     const createlobbyIdRef = useRef();
+
+    useEffect(() => {
+        if (playerLeftLobby.current) {
+            const playerLeftAlertButton = document.getElementById("playerLeftAlertButton");
+            playerLeftAlertButton.click();
+            playerLeftLobby.current = false;
+        }
+    }, [playerLeftLobby]);
 
     function createLobby() {
         handleCreateLobby(createlobbyIdRef.current.value);
@@ -68,7 +76,20 @@ export default function Lobby(props) {
                         </form>
                     </div>
                 </div>
-                
+                <button type="button" className="d-none" data-bs-toggle="modal" data-bs-target="#playerLeftAlertModal" id='playerLeftAlertButton'></button>
+                <div className='modal fade' id='playerLeftAlertModal' tabIndex="-2" aria-labelledby="playerLeftAlertModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h1 className="modal-title fs-5" id="playerLeftAlertModalLabel">Game Over!</h1>
+                                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div className="modal-body">
+                                <h5 className='text-center'>A player has left the game. You have been redirected to the lobby creation screen.</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </>
     );
