@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { connectFirestoreEmulator, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import Nav from './Nav';
 import Card from "react-free-playing-cards/lib/TcN.js";
 
@@ -238,7 +238,7 @@ export default function Game(props) {
             pickSuitButton.click();
             playCardDB(card);
         }
-        else if (discard[discard.length-1][0] != "8" && (discard[discard.length - 1][0] === card[0] || discard[discard.length - 1][1] === card[1])) {
+        else if (discard[discard.length-1][0] !== "8" && (discard[discard.length - 1][0] === card[0] || discard[discard.length - 1][1] === card[1])) {
             // If the card is playable, play it
             playCardDB(card);
             if(card[0] === "2") nextPlayerPickUpTwo();
@@ -299,7 +299,7 @@ export default function Game(props) {
         const discard = gameState[0]?.discard;
         // Take the top card off the discard pile
         const topCard = discard.pop();
-        const newDiscard = new Array();
+        const newDiscard = [];
         newDiscard.push(topCard);
         // Shuffle the discard pile
         const newDeck = shuffle(discard);
@@ -323,6 +323,34 @@ export default function Game(props) {
             default:
                 return null;
         }
+    }
+
+    function restartGame() {
+        if (player.uuid !== gameLeader.uuid){
+            return;
+        }
+        // Reset the deck
+        setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "deck"), {
+            deck: createDeck(),
+            discard: [],
+        });
+        // Reset the game phase
+        setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "gamePhase"), {
+            phase: "game",
+            turnIndex: 0,
+            turnPlayer: players[0].uuid,
+        });
+        // Reset the wild suit
+        setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "wild"), {
+            suit: null,
+        });
+        // Reset the players hands
+        players.forEach((player) => {
+            setDoc(doc(firestore, "lobbies", lobbyId, "players", player.uuid), {
+                hand: []
+            }, { merge: true });
+        });
+        dealCards();
     }
 
     return (
@@ -400,7 +428,7 @@ export default function Game(props) {
                         <div className='d-flex px-5 py-5 text-bg-light align-items-center justify-content-center'>
                             {gameState[0]?.deck.length > 0 && <button className={canPlayCard.current ? '' : 'border border-success'} onClick={drawCard}><Card card={gameState[0]?.deck[0]} height="100px" back /></button>}
                             <button onClick={shuffleDeck}><Card card={gameState[0]?.discard[gameState[0]?.discard.length - 1]} height="100px" /></button>
-                            {gameState[3]?.suit && <h5 className='text-bg-light text-center ms-2'>Wild Suit:<br></br><img width="50px" src={getSuitImage(gameState[3]?.suit)}></img></h5>}
+                            {gameState[3]?.suit && <h5 className='text-bg-light text-center ms-2'>Wild Suit:<br></br><img alt={gameState[3]?.suit} width="50px" src={getSuitImage(gameState[3]?.suit)}></img></h5>}
                         </div>
                         {/* Players Hand */}
                         <div id='players-hand'>
@@ -411,6 +439,9 @@ export default function Game(props) {
                         {/* Skip turn */}
                         <div className='d-flex justify-content-center'>
                             <button className={!canPlayCard.current && pickedUpCardThisTurn.current ? 'd-flex btn btn-danger' : 'd-none btn btn-danger'} onClick={setNextPlayerTurn}>Skip Turn</button>
+                        </div>
+                        <div>
+                            <button className='btn btn-danger' onClick={restartGame}>Restart Game</button>
                         </div>
                     </div>
                 }
@@ -423,10 +454,10 @@ export default function Game(props) {
                                 {/* <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button> */}
                             </div>
                             <div className="modal-body d-flex justify-content-evenly">
-                                <button onClick={() => setWildSuit('h')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img width="50px" src={getSuitImage('h')}></img></button>
-                                <button onClick={() => setWildSuit('s')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img width="50px" src={getSuitImage('s')}></img></button>
-                                <button onClick={() => setWildSuit('c')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img width="50px" src={getSuitImage('c')}></img></button>
-                                <button onClick={() => setWildSuit('d')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img width="50px" src={getSuitImage('d')}></img></button>
+                                <button onClick={() => setWildSuit('h')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img alt='Hearts' width="50px" src={getSuitImage('h')}></img></button>
+                                <button onClick={() => setWildSuit('s')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img alt='Spades' width="50px" src={getSuitImage('s')}></img></button>
+                                <button onClick={() => setWildSuit('c')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img alt='Clubs' width="50px" src={getSuitImage('c')}></img></button>
+                                <button onClick={() => setWildSuit('d')} type="button" className="btn btn-secondary" data-bs-dismiss="modal"><img alt='Diamonds' width="50px" src={getSuitImage('d')}></img></button>
                             </div>
                             <div className="modal-footer">
                                 {/* <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Close</button> */}
