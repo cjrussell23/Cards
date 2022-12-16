@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 // Main navigation bar
 export default function Nav(props) {
-    const { user, signOutUser, leaveLobby, title, brand, lobbyId, restartGame, gameState } = props;
+    const { user, signOutUser, leaveLobby, brand, lobbyId, restartGame, gameState } = props;
     useEffect(() => {
         if(!user.displayName){
             const randomName = uniqueNamesGenerator({ 

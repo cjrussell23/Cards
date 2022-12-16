@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import Nav from './Nav';
 import Card from "react-free-playing-cards/lib/TcN.js";
+import "./App.css";
 
 // This is the main component for the game
 // Rendered when the user is in a lobby
@@ -14,7 +15,7 @@ export default function Game(props) {
     const [gameLeader, setGameLeader] = useState("");
     var playersRef = useRef();
     var canPlayCard = useRef();
-    var pickedUpCardThisTurn = useRef(false);
+    var pickedUpCardThisTurn = useRef();
 
     useEffect(() => {
         canPlayCard.current = checkCanPlayCard();
@@ -41,7 +42,7 @@ export default function Game(props) {
         setOpponents(players.filter((player) => player.uuid !== user.uuid));
         setPlayer(players.filter((player) => player.uuid === user.uuid)[0]);
         if (playersRef?.current?.length > players?.length) {
-                leaveLobby();
+            leaveLobby();
         }
         playersRef.current = players;
     }, [players]);
@@ -62,6 +63,7 @@ export default function Game(props) {
         await setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "wild"), {
             suit: suit
         });
+        setNextPlayerTurn();
     }
 
     // ONLY FOR GAME LEADER
@@ -164,7 +166,7 @@ export default function Game(props) {
     }
 
     function setNextPlayerTurn() {
-        if(!myTurn()) return;
+        if (!myTurn()) return;
         const turnIndex = gameState[2]?.turnIndex;
         const nextTurnIndex = (turnIndex + 1) % players.length;
         const nextTurnPlayer = players[nextTurnIndex];
@@ -192,7 +194,7 @@ export default function Game(props) {
         }, { merge: true });
     }
 
-    function checkCanPlayCard(){
+    function checkCanPlayCard() {
         // Checks if any of the players cards can be played
         const discard = gameState[0]?.discard;
         const playerHand = player?.hand;
@@ -201,12 +203,12 @@ export default function Game(props) {
             return false;
         }
         // console.log(playerHand);
-        for (let i=0; i<playerHand.length; i++){
+        for (let i = 0; i < playerHand.length; i++) {
             if (playerHand[i][0] === "8") {
                 // console.log("8");
                 return true;
             }
-            if(!discard[discard.length -1]){
+            if (!discard[discard.length - 1]) {
                 // console.log("No discard");
                 return true;
             }
@@ -237,18 +239,19 @@ export default function Game(props) {
             const pickSuitButton = document.getElementById("pickSuitButton");
             pickSuitButton.click();
             playCardDB(card);
+            return;
         }
-        else if (discard[discard.length-1][0] !== "8" && (discard[discard.length - 1][0] === card[0] || discard[discard.length - 1][1] === card[1])) {
+        else if (discard[discard.length - 1][0] !== "8" && (discard[discard.length - 1][0] === card[0] || discard[discard.length - 1][1] === card[1])) {
             // If the card is playable, play it
             playCardDB(card);
-            if(card[0] === "2") nextPlayerPickUpTwo();
+            if (card[0] === "2") nextPlayerPickUpTwo();
         }
         else if (discard[discard.length - 1][0] === "8") {
             // Check if the db wild suit is the same as the card suit
             if (gameState[3]?.suit === card[1]) {
                 playCardDB(card);
                 setWildSuit(null);
-                if(card[0] === "2") nextPlayerPickUpTwo();
+                if (card[0] === "2") nextPlayerPickUpTwo();
             }
             else {
                 // console.log(card, gameState[3]);
@@ -292,17 +295,21 @@ export default function Game(props) {
             deck: newDeck
         }, { merge: true });
         pickedUpCardThisTurn.current = true;
+
     }
 
     async function shuffleDeck() {
         // Get the discard pile
         const discard = gameState[0]?.discard;
+        const deck = gameState[0]?.deck;
         // Take the top card off the discard pile
         const topCard = discard.pop();
         const newDiscard = [];
         newDiscard.push(topCard);
+        // Merge the discard pile with the deck
+        let newDeck = [...discard, ...deck];
         // Shuffle the discard pile
-        const newDeck = shuffle(discard);
+        newDeck = shuffle(newDeck);
         // Set the new deck and discard pile
         await setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "deck"), {
             deck: newDeck,
@@ -326,9 +333,9 @@ export default function Game(props) {
     }
 
     function restartGame() {
-        if (player.uuid !== gameLeader.uuid){
-            return;
-        }
+        // if (player.uuid !== gameLeader.uuid) {
+        //     return;
+        // }
         // Reset the deck
         setDoc(doc(firestore, "lobbies", lobbyId, "gameState", "deck"), {
             deck: createDeck(),
@@ -355,7 +362,7 @@ export default function Game(props) {
 
     return (
         <>
-            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} lobbyId={lobbyId} restartGame={restartGame} gameState={gameState}/>
+            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} lobbyId={lobbyId} restartGame={restartGame} gameState={gameState} />
             <main id='main'>
                 {gameState[2]?.phase === "lobby" &&
                     <div className='container mt-5'>
@@ -398,47 +405,57 @@ export default function Game(props) {
                 }
                 {gameState[2]?.phase === "game" &&
                     <div id='game-board'>
-                        {/* Turn indicator */}
-                        <div className='d-flex justify-content-center' id='turn-indicator'>
-                            {gameState[2]?.turnPlayer?.uuid === user.uuid ?
-                                <div className='d-flex align-items-center gap-3'>
-                                    <img src={gameState[2]?.turnPlayer?.image} alt={`${gameState[2]?.turnPlayer?.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
-                                    <h5 className=''>Your Turn!</h5>
-                                </div>
-                                :
-                                <div className='d-flex align-items-center gap-3'>
-                                    <img src={gameState[2]?.turnPlayer?.image} alt={`${gameState[2]?.turnPlayer?.name} profile`} className="rounded-circle" height="50px" width="50px" referrerPolicy="no-referrer"></img>
-                                    <h5 className=''>{gameState[2]?.turnPlayer?.name}'s Turn</h5>
-                                </div>
-                            }
-                        </div>
                         {/* Opponents Hands */}
                         <div className='bg-primary d-flex justify-content-evenly p-2 mt-2' id='opponents-hands'>
                             {opponents.map((opponent) => {
-                                return <div key={opponent.uuid}>
-                                    <div className='d-flex fit-content bg-secondary p-2 gap-2'>
+                                return <div className='card p-0 m-1' key={opponent.uuid}>
+                                    <h5 className='text-center card-header'><span className='pe-3'><img src={opponent?.image} className="rounded-circle" height="30px" width="30px" referrerPolicy="no-referrer"></img></span>{opponent?.name}</h5>
+                                    <div className='d-flex fit-content p-2 opponent-cards align-items-center flex-row justify-content-center w-100 gap-1'>
+                                        {opponent?.hand?.length < 3 ? <div>
                                         {opponent?.hand?.map((card) => {
-                                            return <div key={card} className='card-container'><Card card={card} height="50px" back /></div>
-                                        })}
+                                            return <img className='border border-dark border-1' key={card} src='/images/CardBack.svg' height={50}></img>
+                                        })} 
+                                        </div>
+                                        :
+                                        <div className='card card-counter d-flex align-items-center justify-content-center'>{opponent?.hand?.length} Cards</div>
+                                    }
                                     </div>
                                 </div>
                             })}
                         </div>
                         {/* Table */}
-                        <div className='d-flex px-5 py-5 text-bg-light align-items-center justify-content-center'>
-                            {gameState[0]?.deck.length > 0 && <button className={canPlayCard.current ? '' : 'border border-success'} onClick={drawCard}><Card card={gameState[0]?.deck[0]} height="100px" back /></button>}
-                            <button onClick={shuffleDeck}><Card card={gameState[0]?.discard[gameState[0]?.discard.length - 1]} height="100px" /></button>
-                            {gameState[3]?.suit && <h5 className='text-bg-light text-center ms-2'>Wild Suit:<br></br><img alt={gameState[3]?.suit} width="50px" src={getSuitImage(gameState[3]?.suit)}></img></h5>}
+                        <div className='d-flex justify-content-center align-items-center' id='table'>
+                            <div className='d-grid'>
+                                {gameState[0]?.deck.length > 0 &&
+                                    <button className={canPlayCard.current ? 'playing-card-button' : 'playing-card-button border border-success border-2'} onClick={drawCard}>
+                                        <img alt='Deck' src='/images/CardBack.svg' height="100px"></img>
+                                    </button>}
+                                <button className='playing-card-button' onClick={shuffleDeck}>
+                                    <Card card={gameState[0]?.discard[gameState[0]?.discard.length - 1]} height="100px" />
+                                </button>
+                                {gameState[3]?.suit && <div className='card p-0'>
+                                    <p className='card-header m-0'>Wild Suit</p>
+                                    <div className='d-flex align-items-center justify-content-center'>
+                                        <img alt={gameState[3]?.suit} width="50px" src={getSuitImage(gameState[3]?.suit)}></img>
+                                    </div>
+                                </div>}
+                                {/* Turn indicator */}
+                                <div className={gameState[2]?.turnPlayer?.uuid === user.uuid ? 'd-flex align-items-center flex-column card p-0 border border-success' : 'd-flex align-items-center flex-column card p-0'}>
+                                    <p className={gameState[2]?.turnPlayer?.uuid === user.uuid ? 'card-header bg-success' : 'card-header bg-primary'}>Turn</p>
+                                    <img src={gameState[2]?.turnPlayer?.image} alt={`${gameState[2]?.turnPlayer?.name} profile`} className="rounded-circle p-1" height="50px" width="50px" referrerPolicy="no-referrer"></img>
+                                </div>
+                            </div>
                         </div>
                         {/* Players Hand */}
                         <div id='players-hand'>
                             {player?.hand?.map((card) => {
-                                return <button key={card} onClick={(e) => playCard(card, e)}><Card card={card} height="100px" /></button>
+                                return <button className='playing-card-button' key={card} onClick={(e) => playCard(card, e)}><Card card={card} height="100px" /></button>
                             })}
                         </div>
                         {/* Skip turn */}
                         <div className='d-flex justify-content-center'>
-                            <button className={!canPlayCard.current && pickedUpCardThisTurn.current ? 'd-flex btn btn-danger' : 'd-none btn btn-danger'} onClick={setNextPlayerTurn}>Skip Turn</button>
+                            {console.log(!canPlayCard.current, pickedUpCardThisTurn.current)}
+                            <button className={!canPlayCard.current & pickedUpCardThisTurn.current ? 'd-flex btn btn-danger' : 'd-flex btn btn-danger'} onClick={setNextPlayerTurn}>Skip Turn</button>
                         </div>
                     </div>
                 }

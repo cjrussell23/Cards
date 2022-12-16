@@ -14,6 +14,18 @@ main {
     padding: 10px;
 }
 
+.opponent-cards {
+    overflow: hidden;
+}
+
+.card-counter {
+    background-image: url('../public/images/CardBack.svg');
+    background-size: cover;
+    width: 50px;
+    height: 100px;
+    text-align: center;
+}
+
 .shadow {
     box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.226);
 }
@@ -44,16 +56,6 @@ main {
 
 .fit-content {
     width: fit-content;
-}
-
-.card-container {
-    background-color: white;
-}
-
-.card-container > img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
 #players-hand {
@@ -99,4 +101,22 @@ main {
 .text-box {
     overflow: hidden;
     width: 150px;
+}
+
+.d-grid {
+    display: grid;
+    grid-template-columns: fit-content(100%) fit-content(100%) fit-content(100%) fit-content(100%);
+    grid-auto-rows: 1fr;
+    grid-gap: 5px;
+    margin: 0;
+    padding: 0;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-radius: 100%;
+}
+.playing-card-button {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
 }
