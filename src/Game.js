@@ -355,7 +355,7 @@ export default function Game(props) {
 
     return (
         <>
-            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} lobbyId={lobbyId} />
+            <Nav user={user} signOutUser={signOutUser} leaveLobby={leaveLobby} brand={`${gameLeader.name}'s Game`} lobbyId={lobbyId} restartGame={restartGame} gameState={gameState}/>
             <main id='main'>
                 {gameState[2]?.phase === "lobby" &&
                     <div className='container mt-5'>
@@ -439,9 +439,6 @@ export default function Game(props) {
                         {/* Skip turn */}
                         <div className='d-flex justify-content-center'>
                             <button className={!canPlayCard.current && pickedUpCardThisTurn.current ? 'd-flex btn btn-danger' : 'd-none btn btn-danger'} onClick={setNextPlayerTurn}>Skip Turn</button>
-                        </div>
-                        <div>
-                            <button className='btn btn-danger' onClick={restartGame}>Restart Game</button>
                         </div>
                     </div>
                 }
